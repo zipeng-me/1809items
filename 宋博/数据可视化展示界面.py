@@ -6,12 +6,13 @@ import sys
 
 class WindowDemo(QWidget):
     def __init__(self):
-        
+       # 引用父类方法 
         super().__init__()
-       
-        label1 = QLabel('''推荐的
-                    股票
-                    ''') #标签1
+       # 创建标签 显示文字
+        label1 = QLabel('''上证指数(1a0001)2584.58↓-21.31-0.82%2018-12-1015:00:08
+今开：2589.19	最高：2599.76	成交量：113199698手
+昨收：2605.89	最低：2576.24	成交额：9914814万元''') #标签1
+        
         # label2 = QLabel(self) #标签2
         label3 = QLabel(self) #标签3
         label4 = QLabel(self) #标签4
@@ -27,18 +28,20 @@ class WindowDemo(QWidget):
         label1.setPalette(palette)
         # 居中显示标签
         label1.setAlignment(Qt.AlignCenter)
+        
         # 设置标签2文本
         # nameLb1 = QLabel('账号：')
         # nameEd1 = QLineEdit( self )
         # nameLb1.setBuddy(nameEd1)
         
         # label2.setText("<a href='#'>选择标题字体大小</a>")
+       
         # 居中显示标签3
         label3.setAlignment(Qt.AlignCenter)
         # 设置标签3提示框文字
         label3.setToolTip('这是图片标签')
         # 设置标签3象图
-        label3.setPixmap(QPixmap('./timg.gif'))
+        label3.setPixmap(QPixmap('DrawPrice.png'))
         # 设置标签4文本
         label4.setText('''<a href='#'>返回上一级<br>查询股票</a>''')
         # 居右显示标签
