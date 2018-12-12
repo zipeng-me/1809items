@@ -113,25 +113,6 @@ class Server(Analysis):
                         # 查询
                         elif msg[0] == 'A':
                             self.check(sockfd)
-    
-    # 数据库
-    def database(self, host, user, password, database, port, charset):
-        self.DB_HOST = host
-        self.DB_USER = user
-        self.DB_PORT = port
-        self.DB_PASSWD = password
-        self.DB_NAME = database
-        self.DB_CHARSET = charset
-        # 建立数据连接
-        db = pymysql.connect(
-            host = self.DB_HOST,
-            user = self.DB_USER,
-            password = self.DB_PASSWD,
-            database = self.DB_NAME,
-            charset = self.DB_CHARSET,
-            port = self.DB_PORT)
-        # 生成数据库游标对象
-        self.cur = db.cursor()
 
     # 注册
     def login(self, sockfd):
@@ -159,6 +140,5 @@ class Server(Analysis):
 
 if __name__ == "__main__":
     s = Server('localhost', 8000)
-    s.database('localhost', 'root', '123456', 'test', 3306, 'utf8')
     s.handle()
     
