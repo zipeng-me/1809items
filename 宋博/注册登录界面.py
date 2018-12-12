@@ -83,19 +83,17 @@ class QlabelDemo(QDialog):
         self.do_register(name,passwd)
     
     # 登录方法
-    def do_login(s):
+    def do_login(self,name,passwd):
         msg = "L %s %s"%(name,passwd)
         s.send(msg.encode())
         data = s.recv(128).decode()
 
     # 注册方法
-    def do_register(s):    
+    def do_register(self,name,passwd):    
         msg = "R %s %s"%(name,passwd)
         #发送请求
         s.send(msg.encode())
-        #等待回复
-        # data = s.recv(128).decode()       
-    
+       
     # 图标方法
     def Icon(self):
         # 程序图标
