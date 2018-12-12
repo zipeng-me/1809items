@@ -142,6 +142,10 @@ class Database(object):
               id int not null primary key auto_increment,
               date varchar(11) not null,
               code varchar(11) not null,
+              up_count float(7,2) not null,
+              ten_count float(7,2) not null,
+              ratio float(7,2) not null,
+              days int not null,
               content text not null
               )engine=innodb, charset=utf8'''
         self.commit_to_database(sql)
@@ -151,7 +155,7 @@ class Database(object):
         '''在推送信息表stockinfo中插入数据
         接收列表或元祖
         '''
-        sql = "insert into stockinfo values(0, %r, %r, %r)" % args[0]
+        sql = "insert into stockinfo values(0, %r, %r, %f, %f, %f, %d, %r)" % args[0]
         self.commit_to_database(sql)
 
     # 查询stockinfo中的数据
@@ -191,5 +195,5 @@ if __name__ == "__main__":
     #         d.insert_stock_table(x)
     #     print(code)
     # d.create_userinfo_table()
-    # d.create_stockinfo_table()
+    d.create_stockinfo_table()
     # d.close_database()

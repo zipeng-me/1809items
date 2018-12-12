@@ -5,9 +5,10 @@
 '''
 import socket
 import sys
-from analysis import Analysis
+import getpass
+import re
 
-class Client(Analysis):
+class Client(object):
     # 初始化
     def __init__(self, ip, port):
         self.__IP = ip
@@ -32,56 +33,106 @@ class Client(Analysis):
     # 操作
     def operation(self):
         while True:
-            print('1.登录  2.注册  3.查询  q.退出')
+            print('1.登录  2.注册  q.退出')
             # 输入选项
             cmd = input('>> ')
             # 如果选项不符，重新输入
-            if cmd not in ['1', '2', '3', 'q']:
+            if cmd not in ['1', '2', 'q']:
                 print('不存在该选项，请重新输入：')
                 continue
             # 登录
             elif cmd == '1':
-                self.sockfd.send(b'L')
+                # self.sockfd.send(b'L')
                 self.login()
             # 注册
             elif cmd == '2':
-                self.sockfd.send(b'R')
+                # self.sockfd.send(b'R')
                 self.register()
-            # 查询
-            elif cmd == '3':
-                self.check()
             # 退出
             elif cmd == 'q':
                 self.closeClient()
     
-    # 登录
-    def register(self):
-        msg = self.sockfd.recv(128)
-        print(msg.decode())
-
     # 注册
+    def register(self):
+        while True:
+            name = input('请输入姓名(8-18位)：')
+            passwd_one = getpass.getpass('请输入密码(8-18位)：')
+            passwd_two = getpass.getpass('再次输入密码：')
+            # 判断姓名和密码是否输入正确
+            regex = r'^[a-zA-Z0-9]{8,18}$'
+            result = re.compile(regex)
+            if passwd_one != passwd_two:
+                print('两次密码输入不同')
+                continue
+            if result.match(name) and result.match(passwd_one):
+                msg = 'R %s %s' % (name, passwd_one)
+                # 发送请求
+                self.sockfd.send(msg.encode())
+                # 等待回复
+                data = self.sockfd.recv(128).decode()
+                if data == 'OK':
+                    print('注册成功')
+                elif data == 'EXISTS':
+                    print('该用户已存在，请重新输入！')
+                    continue
+                else:
+                    print('注册失败！')
+            else:
+                print('用户名或密码输入格式不符')
+                continue
+            return
+
+    # 登录
     def login(self):
-        msg = self.sockfd.recv(128)
-        print(msg.decode())
+        name = input('请输入用户名：')
+        passwd = getpass.getpass('请输入密码：')
+        # 判断姓名和密码是否输入正确
+        regex = r'^[a-zA-Z0-9]{8,18}$'
+        result = re.compile(regex)
+        # 如果正确进行登录验证，否则退回上一级界面
+        if result.match(name) and result.match(passwd):
+            msg = 'L %s %s' % (name, passwd)
+            # 发送请求
+            self.sockfd.send(msg.encode())
+            # 接收消息
+            data = self.sockfd.recv(128).decode()
+            if data == 'OK':
+                print('登录成功')
+                self.check()
+            else:
+                print('登录失败')
+        else:
+            print('用户名密码格式不符！')
 
     # 查询
     def check(self):
-        code = input('请输入要查询的股票代码：')
-        try:
-            up, ten, days = self.analysis(code)
-            radio = round(ten/up, 2)
-        except Exception:
-            print('无法获取股票数据，请换一只股票')
-        else:
-            print('股票指标符合度：%s%%，时间间隔：%s天' % (radio*100, days))
-
+        while True:
+            code = input('请输入要查询的股票代码：')
+            regex = r'^[0-9]{6}$'
+            result = re.compile(regex)
+            # 判断输入是否有误
+            if not result.match(code):
+                print('代码输入错误！')
+                continue
+            msg = 'C %s' % code
+            # 发送信息给服务器
+            self.sockfd.send(msg.encode())
+            # 接收服务器数据
+            data = self.sockfd.recv(1024)
+            if data.decode() == 'FAIL':
+                print('无可查数据，请重新输入查询：')
+                continue
+            print(data.decode())
+            # 接收k线数据
+            data = self.sockfd.recv(1024*8)
+            print(data.decode())
+    
     # 关闭客户端
     def closeClient(self):
         # 关闭套接字
         self.sockfd.close()
         # 关闭进程
         sys.exit(0)
-
 
 if __name__ == "__main__":
     c = Client('localhost', 8000)

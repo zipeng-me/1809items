@@ -16,52 +16,73 @@
     用户指定股票，调用该方法对指定股票分析。
 '''
 import tushare
+import database
+import stock
+import time
 
 class Analysis(object):
     def __init__(self):
+        # 创建股票对象
+        self.sa = stock.Stock()
+        # 获取数据库对象
+        self.dba = self.sa.dbs
+        # 获取股票列表
         self.get_stock_list()
-        self.start()
 
-    def start(self):
+    def write_analysis_info(self):
         # 记录符合条件的股票代码和比率
-        stock_list = self.stock_list
-        stock_check = []
-        for code in stock_list:
+        # 记录日期
+        date = str(time.strftime('%Y-%m-%d',time.localtime()))
+        for code in self.stock_list:
             try:
-                up, ten, days = self.analysis(code)
+                up, ten, days, ratio = self.analysis(code) 
             except Exception:
-                continue
-            ratio = ten / up
+                print(code)
             # 如果10天后上涨的次数与总次数的比率大于0.80，筛选
             if ratio >= 0.80 and days <= 3:
                 stock_check.append((code, ratio))
-            print(code, ratio, days, stock_check)
-        print(stock_check)
+                content = '股票指标符合度达到80%以上，近期有走强的趋势，建议买入。'
+            elif ratio >= 0.8:
+                content = '股票指标符合度较高，建议继续观望。'
+            elif ratio >= 0.6 and days <= 5:
+                content = '股票指标符合度一般，可少量买入。'
+            elif ratio >= 0.6:
+                content = '股票指标符合度一般，不建议买入。'
+            else:
+                content = '股票不符合指标，建议远离。'
+            self.dba.insert_stockinfo_table(
+                (date, code, up, ten, ratio, days, content)
+            )
+            print(code, content)
 
     # 获取股票列表
     def get_stock_list(self):
         # 查询当前所有正常上市交易的股票列表
-        data = tushare.get_stock_basics()
-        self.stock_list = data.index
+        self.stock_list = self.sa.getStockList()
 
     # 分析
     def analysis(self, code):
         data_analysis = self.get_daydate(code)
+        # print(data_analysis)
         up_count, ten_count = self.count_avg_cross_day(data_analysis)
+        # print(up_count, ten_count)
         up_days = self.count_up_last_days(data_analysis)
-        return up_count, ten_count, up_days
+        ratio = ten_count / up_count
+        return up_count, ten_count, up_days, ratio
 
-    # 获取日线数据，元素形式[(日期, 收盘价, 12日均价),]
+    # 获取日线数据，元素形式[(收盘价, 12日均价),]
     def get_daydate(self, code):
         # 获取股票日线数据
-        data_day = tushare.get_k_data(code)
-        # 收盘价
-        close = [close for close in data_day.close]
-        # 获取12日均线
+        self.dba.select_stock_table(code, 'data_day', ('close',))
+        close = self.dba.fetch_data()
+        lst_temp = []
+        for x in close:
+            lst_temp.append(x[0])
+        close = lst_temp
         data_12day = self.get_avgdata(close)
-        # 提取数据，元素形式[(日期, 收盘价, 12日均价),]
+        # 提取数据，元素形式[(收盘价, 12日均价),]
         data_analysis = []
-        for x in zip(data_day.date[13:], close[13:], data_12day):
+        for x in zip(close[13:], data_12day):
             data_analysis.append(x)
         return data_analysis
 
@@ -84,14 +105,16 @@ class Analysis(object):
         count = 0
         # 上穿十天后仍高于日线的次数
         count_ten = 0
+        # print(data)
         i = 1
         while i < len(data):
             # 均线上穿日线
-            if (data[i-1][2] < data[i-1][1]) & (data[i][2] > data[i][1]):
+            if (data[i-1][1] < data[i-1][0]) & (data[i][1] > data[i][0]):
                 count += 1
                 # 10天后均线仍高于日线
-                if data[i+10][2] > data[i+10][1]:
-                    count_ten += 1
+                if (i+10) < len(data):
+                    if data[i+10][1] > data[i+10][0]:
+                        count_ten += 1
             i += 1
         return (count, count_ten)
 
@@ -102,7 +125,7 @@ class Analysis(object):
         i = -1
         while True:
             # 判断是否上穿
-            if (data[i-1][2] < data[i-1][1]) & (data[i][2] > data[i][1]):
+            if (data[i-1][1] < data[i-1][0]) & (data[i][1] > data[i][0]):
                 break
             count += 1
             i -= 1
@@ -110,3 +133,4 @@ class Analysis(object):
 
 if __name__ == "__main__":
     a = Analysis()
+    a.write_analysis_info()

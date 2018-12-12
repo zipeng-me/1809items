@@ -7,11 +7,10 @@ import socket
 import select
 import queue
 import sys
-import pymysql
-from analysis import Analysis
+import database
 
 # 服务器
-class Server(Analysis):
+class Server(object):
     # 初始化
     def __init__(self, ip, port):
         self.__IP = ip
@@ -21,8 +20,8 @@ class Server(Analysis):
         # 创建套接字
         self.runServer()
         self.create_epoll()
-        # 加载股票分析信息
-        # Analysis()
+        # 创建数据库对象
+        self.dbsev = database.Database()
 
     # 创建服务器套接字
     def runServer(self):
@@ -106,26 +105,61 @@ class Server(Analysis):
                         if msg is None:
                             return
                         elif msg[0] == 'L':
-                            self.login(sockfd)
+                            self.login(sockfd, msg)
                         # 注册
                         elif msg[0] == 'R':
-                            self.register(sockfd)
+                            self.register(sockfd, msg)
                         # 查询
+                        elif msg[0] == 'C':
+                            self.check(sockfd, msg)
                         elif msg[0] == 'A':
-                            self.check(sockfd)
-
-    # 注册
-    def login(self, sockfd):
-        sockfd.send('登录'.encode())
+                            sockfd.send(b'this is a message')
 
     # 登录
-    def register(self, sockfd):
-        sockfd.send('注册'.encode())
+    def login(self, sockfd, msg):
+        lst = msg.split(' ')
+        name = lst[1]
+        passwd = lst[2]
+        # 从数据库查询用户是否存在
+        self.dbsev.select_userinfo_table(name, passwd)
+        if self.dbsev.fetch_data():
+            sockfd.send(b'OK')
+        else:
+            sockfd.send(b'FAIL')
+
+    # 注册
+    def register(self, sockfd, msg):
+        lst = msg.split(' ')
+        name = lst[1]
+        passwd = lst[2]
+        # 判断用户是否存在
+        self.dbsev.select_userinfo_table(name, passwd)
+        if self.dbsev.fetch_data():
+            sockfd.send(b'EXISTS')
+            return
+        else:
+            try:
+                self.dbsev.insert_userinfo_table(name, passwd)
+            except Exception:
+                sockfd.send(b'FAIL')
+            else:
+                sockfd.send(b'OK')
 
     # 查询
-    def check(self, sockfd):
-        # 客户端启动后，推送信息
-        sockfd.send('600660'.encode())
+    def check(self, sockfd, msg):
+        lst = msg.split(' ')
+        code = lst[1]
+        self.dbsev.select_stockinfo_table(code)
+        data = self.dbsev.fetch_data()
+        if data:
+            sockfd.send(data.encode())
+        else:
+            sockfd.send(b'FAIL')
+            return
+        self.dbsev.select_stockinfo_table(code)
+        data = self.dbsev.fetch_data()
+        sockfd.send(data.encode())
+        
 
     # 关闭服务器
     def serverClose(self):
