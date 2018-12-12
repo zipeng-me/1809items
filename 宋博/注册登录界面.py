@@ -5,6 +5,7 @@ from PyQt5.QtCore import QObject,pyqtSignal
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
 import sys  
+from socket import *
 # from 注册登录信息储存数据库 import*
 class QlabelDemo(QDialog):  
     def __init__(self ):  
@@ -59,19 +60,43 @@ class QlabelDemo(QDialog):
     #     self.signal5.emit({'a':'b'})
     # def signalCall5(self,val):
     #     print('signl5',val)
-    
-    
-    # 创建点击事件1
-    def link_click1(self):
-        print(self.nameEd1.text())
-        print(self.nameEd2.text())
-        # 打开外部文件
-        os.system("用户查询.py")
-    # 创建点击事件2
-    def link_click2(self):
-        print(self.nameEd1.text())
-        print(self.nameEd2.text())
 
+    HOST = '127.0.0.1'
+    PORT = 8000
+    s = socket()
+    s.connect((HOST,PORT)) #连接服务器
+
+    # 创建登录点击事件1
+    def link_click1(self):
+        name = self.nameEd1.text()
+        passwd = self.nameEd2.text()
+        self.do_login(name,passwd)
+        if data == 'OK':
+            print("登录成功")  
+            # 打开外部文件
+            os.system("用户查询.py")
+    
+    # 创建注册点击事件2
+    def link_click2(self):
+        name = self.nameEd1.text()
+        passwd = self.nameEd2.text()
+        self.do_register(name,passwd)
+    
+    # 登录方法
+    def do_login(s):
+        msg = "L %s %s"%(name,passwd)
+        s.send(msg.encode())
+        data = s.recv(128).decode()
+
+    # 注册方法
+    def do_register(s):    
+        msg = "R %s %s"%(name,passwd)
+        #发送请求
+        s.send(msg.encode())
+        #等待回复
+        # data = s.recv(128).decode()       
+    
+    # 图标方法
     def Icon(self):
         # 程序图标
         self.setWindowIcon(QIcon("./killer7.ico"))
