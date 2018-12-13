@@ -1,8 +1,5 @@
 # -*- coding:utf-8 -*-
-'''股票
-股票功能：
-
-'''
+'''股票'''
 import tushare
 import pymysql
 import database
@@ -11,34 +8,30 @@ import matplotlib
 import matplotlib.dates
 import matplotlib.pyplot
 import matplotlib.finance
+import time
 
 class Stock(object):
     # 初始化
     def __init__(self):
-        # 创建数据库对象
-        self.dbs = database.Database()
+        pass
 
     # 获取个股历史数据
-    def getStockHistData(self, code):
-        # 调用tushare的get_hist_data()方法获取数据
-        # 返回值：
-        # date:日期
-        # open:开盘价
-        # hign:最高价
-        # close:收盘价
-        # low:最低价
-        # volume:成交量
-        # price_change:价格变动
-        # p_change:涨跌幅
-        # ma5:5日均价
-        # ma10:10日均价
-        # ma20:20日均价
-        # v_ma5:5日均量
-        # v_ma10:10日均量
-        # v_ma20:20日均量
-        # turnover:换手率
+    def getStockHistData(self, code, start='2010-01-01', end=str(time.strftime('%Y-%m-%d',time.localtime()))):
+        '''获取股票历史数据
+        调用tushare的get_hist_data()方法获取数据
+        返回值：
+        date:日期
+        code:股票代码
+        open:开盘价
+        hign:最高价
+        close:收盘价
+        low:最低价
+        ma5:5日均价
+        ma10:10日均价
+        ma20:20日均价
+        '''
         # 从tushare平台获取数据
-        data = tushare.get_hist_data(code)
+        data = tushare.get_hist_data(code, start, end)
         # 建立存储数据的列表
         self.stock_list = []
         # 组合所需元素(日期-股票代码-开盘价-收盘价-最高价-最低价-5日线－10日线-20日线)
@@ -54,9 +47,18 @@ class Stock(object):
         self.data = tushare.get_stock_basics()
         return self.data.index
     
-    # 从数据库中获取k线数据
-    def get_data_for_k(self, code):
+    # 从数据库中获取k线数据(用于测试)
+    def get_data_for_k(self, code='600660'):
+        '''获取k线数据(数据库)
+        参数：股票代码，字符串
+        返回：fetchall()方法的大元组
+        ((date, open, hign, low, close),)
+        注：数据库表中hign(high)写错了，就错下去吧，懒得改了
+        '''
         # 从数据库中查询数据
+        # 创建数据库对象
+        self.dbs = database.Database()
+        # 查询k线数据
         msg = self.dbs.select_stock_table(code, 'data_day', (
         'date', 'open', 'hign', 'low', 'close'))
         if msg == -1:
@@ -68,9 +70,14 @@ class Stock(object):
     
     # 处理k线数据
     def handle_data_for_k(self):
+        '''处理k线数据
+        返回列表：[[date, open, hign, low, close],]
+        date:处理成matplotlib时间格式
+        open,hign,low,close为float类型
+        '''
         # 创建k线数据列表
         self.lst_k = []
-        for x in self.data_k[-120:]:
+        for x in self.data_k:
             self.lst_k.append([
                 self.handle_time_date(x[0]),
                 x[1],x[2],x[3],x[4]
@@ -112,13 +119,14 @@ class Stock(object):
         # 保存k线
         matplotlib.pyplot.savefig('k.png')
         # 展示k线
-        # matplotlib.pyplot.show()
+        matplotlib.pyplot.show()
     
 
 if __name__ == "__main__":
-    # s = Stock()
+    s = Stock()
     # s.get_data_for_k('600660')
     # s.handle_data_for_k()
     # a = s.handle_time_date('2018-12-12')
     # s.draw_k('600660')
-    pass
+    data = s.getStockHistData('600660','2018-10-12')
+    print(data)

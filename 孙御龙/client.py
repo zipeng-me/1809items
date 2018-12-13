@@ -1,12 +1,10 @@
 # -*- coding:utf-8 -*-
-'''客户端
-客户端功能：
-
-'''
+'''客户端'''
 import socket
 import sys
 import getpass
 import re
+import stock_single
 
 class Client(object):
     # 初始化
@@ -107,7 +105,9 @@ class Client(object):
     # 查询
     def check(self):
         while True:
-            code = input('请输入要查询的股票代码：')
+            code = input('请输入要查询的股票代码(q返回)：')
+            if code == 'q':
+                return
             regex = r'^[0-9]{6}$'
             result = re.compile(regex)
             # 判断输入是否有误
@@ -125,8 +125,22 @@ class Client(object):
             print(data.decode())
             # 接收k线数据
             data = self.sockfd.recv(1024*8)
-            print(data.decode())
+            data = self.decode_k_data(data.decode())
+            # print(data)
+            ss = stock_single.StockSingle(code, data)
+            ss.draw_k(code)
+            # print(data)
     
+    # 解析k线数据
+    def decode_k_data(self, data):
+        lst = data.split()
+        lst_temp = []
+        for i in lst:
+            t = i.split(',')
+            lst_temp.append((t[0], float(t[1]), float(t[2]), 
+            float(t[3]), float(t[4])))
+        return lst_temp
+
     # 关闭客户端
     def closeClient(self):
         # 关闭套接字
