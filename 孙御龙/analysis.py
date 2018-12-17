@@ -37,7 +37,7 @@ class Analysis(object):
             try:
                 up, ten, days, ratio = self.analysis(code) 
             except Exception:
-                # print(code)
+                print(code)
             # 如果10天后上涨的次数与总次数的比率大于0.80，筛选
             if ratio >= 0.80 and days <= 3:
                 content = '股票指标符合度达到80%以上，近期有走强的趋势，建议买入。'

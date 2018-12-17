@@ -94,7 +94,7 @@ class Database(object):
     # 给股票数据添加索引(code)
     def set_index_on_stock(self):
         '''给data_day的code列增加索引'''
-        sql = "alter table data_day add index code_index(code)"
+        sql = "create index code_index on data_day(code)"
         self.commit_to_database(sql)
 
     # 从股票数据库中查询数据
@@ -330,7 +330,7 @@ if __name__ == "__main__":
     # d.select_stockinfo_for_case_soso()
     # data = d.fetch_data()
     # print(data)
-    data = d.select_stock_table_for_k('600660')
+    # data = d.select_stock_table_for_k('600660')
     # d.select_stockinfo_table('600660')
     # data = str(d.fetch_data()[0][0])
     # print(data)
@@ -347,4 +347,8 @@ if __name__ == "__main__":
     #     lst_temp.append((t[0], float(t[1]), float(t[2])
     #     , float(t[3]), float(t[4])))
     # print(lst_temp)
-    print(len(data))
+    # print(len(data))
+    # msg = d.send_stockinfo_to_client()
+    d.select_stockinfo_for_case_perfect()
+    s = d.fetch_data()
+    print(s)

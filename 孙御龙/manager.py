@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 '''管理员
 写代码写到吐啊，萌萌老师说要写个对象啊，那就整个对象吧，啊哈哈
+要先启动数据库啊！ :$ mysql -uroot -p123456
 '''
 import analysis
 import database
@@ -77,6 +78,7 @@ class Manger(object):
                 self.write_to_diary('data_day')
                 if not self.cheak_table_exists('userinfo'):
                     self.dbm.create_userinfo_table()
+                self.dbm.set_index_on_stock()
                 print('写入完毕！')
             # 将分析数据写入stockinfo表
             elif com == '5':
@@ -95,7 +97,8 @@ class Manger(object):
                 if not old:
                     print('数据无需更新')
                     continue
-                self.dbm.write_all_stock_data(start=old, end=now) 
+                self.dbm.write_all_stock_data(start=old, end=now)
+                self.write_to_diary('data_day') 
                 print('更新完毕！')
             # 更新stockinfo表
             elif com == '7':
@@ -105,7 +108,8 @@ class Manger(object):
                     print('数据无需更新')
                     continue
                 self.ana.write_analysis_info()
-                print('更新完毕')
+                self.write_to_diary('stockinfo')
+                print('更新完毕！')
             # 删除用户
             elif com == '8':
                 name = input('主人要拿谁开刀？')
@@ -207,3 +211,4 @@ if __name__ == "__main__":
     # m.mange()
     # m.cheak_table_not_exists('stockinfo')
     # print(m.check_update_time('data_day'))
+    # m.write_to_diary('stockinfo')
