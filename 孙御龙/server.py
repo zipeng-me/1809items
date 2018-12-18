@@ -213,6 +213,6 @@ class Server(object):
         sys.exit(0)
 
 if __name__ == "__main__":
-    s = Server('localhost', 8000)
+    s = Server('0.0.0.0', 8000)
     s.handle()
     
